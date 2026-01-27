@@ -133,34 +133,7 @@ Client Request
 
 ## Database Schema
 
-### Core Tables
-```sql
-users (user_id PK, password_hash, display_name, avatar_url, admin, created_at)
-rooms (room_id PK, version, creator, created_at, tombstone_event_id)
-events (event_id PK, room_id, type, state_key, sender, content, origin_server_ts)
-room_memberships (room_id, user_id, membership, display_name, avatar_url)
-room_state (room_id, event_type, state_key, event_id) -- current state snapshot
-```
-
-### E2EE Tables
-```sql
-devices (user_id, device_id, display_name, keys, signatures)
-cross_signing_keys (user_id, key_type, key_data, signatures)
-cross_signing_signatures (user_id, key_id, signer_user_id, signature)
-key_backup_versions (version PK, user_id, algorithm, auth_data)
-key_backup_keys (user_id, version, room_id, session_id, session_data)
-one_time_keys (user_id, device_id, key_id, algorithm, key_data)
-fallback_keys (user_id, device_id, key_id, algorithm, key_data, used)
-```
-
-### Sync & Messaging
-```sql
-access_tokens (token PK, user_id, device_id, created_at)
-sync_tokens (user_id, device_id, since_token, room_positions)
-to_device_messages (id, user_id, device_id, sender, type, content)
-typing (room_id, user_id, timeout_at)
-receipts (room_id, user_id, event_id, receipt_type, ts)
-```
+Please see `schema.sql`
 
 ## API Implementation
 
@@ -235,6 +208,9 @@ receipts (room_id, user_id, event_id, receipt_type, ts)
 - `wrangler` CLI authenticated
 
 ### Quick Deploy
+
+Don't forget to use `--local` if you're not deploying to Cloudflare.
+
 ```bash
 # Clone and install
 git clone https://github.com/nkuntz1934/matrix-workers
@@ -242,6 +218,7 @@ cd matrix-workers
 npm install
 
 # Create resources (copy the IDs from output)
+# Skip this if you're running locally, Wrangler will create everything for you
 wrangler d1 create matrix-db
 wrangler kv namespace create SESSIONS
 wrangler kv namespace create DEVICE_KEYS
@@ -251,8 +228,11 @@ wrangler kv namespace create CACHE
 wrangler kv namespace create ACCOUNT_DATA
 wrangler r2 bucket create matrix-media
 
+# Initialise the database
+wrangler d1 execute matrix-db --file=./schema.sql
+
 # Deploy
-wrangler deploy
+wrangler deploy # or `npm run dev` if local
 ```
 
 ### Configuration
