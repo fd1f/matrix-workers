@@ -1,5 +1,13 @@
 # Matrix Homeserver on Cloudflare Workers
 
+hi. this is my attempt to get the homeserver working. it's mainly db schema corrections, but it's still very broken.
+
+you can log in and sync now.
+
+if upstream publishes fixes (nkuntz1934/matrix-workers#5), i will just move to that.
+
+---
+
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nkuntz1934/matrix-workers)
 
 A production-grade Matrix homeserver implementation running entirely on Cloudflare's edge infrastructure. Implements Matrix Client-Server API v1.12 and Server-Server (Federation) API.
@@ -133,7 +141,7 @@ Client Request
 
 ## Database Schema
 
-Please see `schema.sql`
+Please see `schema.sql`.
 
 ## API Implementation
 
@@ -203,9 +211,27 @@ Please see `schema.sql`
 
 ## Deployment
 
+
 ### Prerequisites
+
+**Note:** if you want to run locally with Wrangler, ignore these
+
 - Cloudflare account (Workers Paid plan for Durable Objects)
 - `wrangler` CLI authenticated
+
+### Local Deploy
+
+```bash
+git clone https://github.com/nkuntz1934/matrix-workers
+cd matrix-workers
+npm install
+npm install @cloudflare/workerd-linux-64 # or whichever runtime applies to your CPU
+
+# Initialise the database
+wrangler d1 execute matrix-db --local --file=./schema.sql
+
+npm run dev
+```
 
 ### Quick Deploy
 
@@ -218,7 +244,6 @@ cd matrix-workers
 npm install
 
 # Create resources (copy the IDs from output)
-# Skip this if you're running locally, Wrangler will create everything for you
 wrangler d1 create matrix-db
 wrangler kv namespace create SESSIONS
 wrangler kv namespace create DEVICE_KEYS
@@ -232,7 +257,7 @@ wrangler r2 bucket create matrix-media
 wrangler d1 execute matrix-db --file=./schema.sql
 
 # Deploy
-wrangler deploy # or `npm run dev` if local
+wrangler deploy
 ```
 
 ### Configuration
