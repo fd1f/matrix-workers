@@ -31,15 +31,18 @@ CREATE TABLE rooms (
 CREATE TABLE events (
     event_id PRIMARY KEY,
     room_id,
+    sender,
     event_type,
     state_key,
-    sender,
     content,
     origin_server_ts,
+    unsigned,
     depth,
-    stream_ordering,
     auth_events,
-    prev_events
+    prev_events,
+    hashes,
+    signatures,
+    stream_ordering
 );
 CREATE TABLE room_memberships (
     room_id,

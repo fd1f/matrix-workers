@@ -388,7 +388,9 @@ app.get('/_matrix/client/v3/sync', requireAuth(), async (c) => {
   const timeout = Math.min(parseInt(c.req.query('timeout') || '0'), 30000);
 
   // If no changes and timeout > 0, wait for events via Durable Object
-  if (!hasChanges && timeout > 0 && sincePosition > 0) {
+  // if (!hasChanges && timeout > 0 && sincePosition > 0) {
+  // FIXME: this is just a hack to avoid sync spam, i didn't put much thought into this logic
+  if (timeout > 0) {
     console.log('[sync] Entering DO wait for', userId, 'timeout:', timeout);
     const syncDO = c.env.SYNC;
     const doId = syncDO.idFromName(userId);
