@@ -95,10 +95,10 @@ app.get('/_matrix/key/v2/server/:keyId', async (c) => {
 app.put('/_matrix/federation/v1/send/:txnId', async (c) => {
   // Note: txnId could be used for deduplication in future
   void c.req.param('txnId');
-  const origin = c.req.header('X-Matrix-Origin');
+  const header = c.req.header('Authorization');
 
-  if (!origin) {
-    return Errors.missingParam('X-Matrix-Origin header').toResponse();
+  if (!header) {
+    return Errors.missingParam('Authorization header').toResponse();
   }
 
   let body: any;
