@@ -107,7 +107,6 @@ export function requireFederationAuth() {
         return Errors.unknown().toResponse()
       }
     }
-    // TODO: add the XMatrixAuth object into the context, or at least its values
     return next()
   })
 }
