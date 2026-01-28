@@ -4,10 +4,16 @@
 
 A fork of @nkuntz's vibe coded Matrix implementation, with some fixes:
 
-- Database schema fixes to match the code (still in progress, a lot of things are broken)
+- Database schema fixes to match the code (still in progress, things may still be broken)
 - Proper federation header check (nkuntz1934/matrix-workers#9)
 
-If upstream publishes fixes (nkuntz1934/matrix-workers#5), there's a chance I will leave this fork alone.
+***DO NOT DEPLOY THIS TO THE CLOUD.***. Your requests per second will be through the roof
+because `/sync` polling timeouts aren't upheld yet.
+
+That aside, please try locally. It's fun.
+
+Note I'm *not an engineer*. So if upstream publishes fixes (nkuntz1934/matrix-workers#5),
+there's a good chance I will leave this fork alone.
 
 Excreted by Claude Code Opus 4.5, extended with human hands.
 
@@ -48,6 +54,8 @@ npm run dev
 ```
 
 ### Quick Deploy
+
+LIKE I SAID, DON'T USE THE CLOUD!
 
 ```bash
 # Clone and install

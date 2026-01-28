@@ -1,6 +1,6 @@
 -- Core Tables
 CREATE TABLE users (
-    user_id PK,
+    user_id PRIMARY KEY,
     password_hash,
     localpart,
     display_name,
@@ -11,16 +11,25 @@ CREATE TABLE users (
     created_at,
     updated_at
 );
+CREATE TABLE user_threepids (
+    user_id,
+    medium,
+    address,
+    validated_at,
+    added_at,
+    -- this constraint is my own personal addition, because why have duplicate 3PIDs?
+    UNIQUE(user_id, medium, address)
+);
 CREATE TABLE rooms (
-    room_id PK,
-    version,
+    room_id PRIMARY KEY,
+    room_version,
     is_public,
     creator_id,
     created_at,
     tombstone_event_id
 );
 CREATE TABLE events (
-    event_id PK,
+    event_id PRIMARY KEY,
     room_id,
     event_type,
     state_key,
@@ -40,17 +49,61 @@ CREATE TABLE room_memberships (
     display_name,
     avatar_url
 );
-CREATE TABLE room_state (room_id, event_type, state_key, event_id);
+CREATE TABLE room_state (
+    room_id PRIMARY KEY,
+    event_type,
+    state_key,
+    event_id,
+    UNIQUE(event_type, state_key)
+);
 CREATE TABLE room_aliases (alias, room_id, creator_id, created_at);
-CREATE TABLE account_data (user_id, room_id, event_type, content);
+CREATE TABLE account_data (
+    user_id,
+    room_id,
+    event_type,
+    content,
+    UNIQUE(user_id, room_id, event_type)
+);
 CREATE TABLE account_data_changes (user_id, room_id, event_type, stream_position);
-CREATE TABLE presence (user_id, presence, status_msg, last_active_ts);
-CREATE TABLE content_reports (reporter_user_id, room_id, event_id, reason, score, created_at);
-CREATE TABLE transaction_ids (user_id, txn_id, event_id, response);
+CREATE TABLE presence (
+    user_id PRIMARY KEY,
+    presence,
+    status_msg,
+    last_active_ts
+);
+CREATE TABLE content_reports (
+    reporter_user_id,
+    room_id,
+    event_id,
+    reason,
+    score,
+    created_at
+);
+CREATE TABLE transaction_ids (
+    user_id,
+    txn_id,
+    event_id,
+    response,
+    UNIQUE(user_id, txn_id)
+);
 -- Federation
-CREATE TABLE server_keys (key_id, public_key, private_key, valid_from, valid_until, is_current);
+CREATE TABLE server_keys (
+    key_id,
+    public_key,
+    private_key,
+    valid_from,
+    valid_until,
+    is_current
+);
 -- Media
-CREATE TABLE media (media_id, user_id, content_type, content_length, filename, created_at);
+CREATE TABLE media (
+    media_id,
+    user_id,
+    content_type,
+    content_length,
+    filename,
+    created_at
+);
 -- E2EE Tables
 CREATE TABLE devices (
     user_id,
@@ -60,20 +113,30 @@ CREATE TABLE devices (
     signatures,
     created_at
 );
-CREATE TABLE cross_signing_keys (user_id, key_type, key_id, key_data, signatures);
-CREATE TABLE cross_signing_signatures (
+CREATE TABLE device_key_changes (user_id, device_id, change_type, stream_position);
+CREATE TABLE cross_signing_keys (
     user_id,
+    key_type,
+    key_id,
+    key_data,
+    signatures,
+    UNIQUE(user_id, key_type)
+);
+CREATE TABLE cross_signing_signatures (
+    user_id PRIMARY KEY,
     key_id,
     signer_user_id,
     signer_key_id,
-    signature
+    signature,
+    UNIQUE(user_id, key_id, signer_user_id, signer_key_id)
 );
 CREATE TABLE key_backup_versions (
-    version PK,
+    version PRIMARY KEY,
     user_id,
     algorithm,
     auth_data,
     etag,
+    deleted,
     count
 );
 CREATE TABLE key_backup_keys (
@@ -84,26 +147,37 @@ CREATE TABLE key_backup_keys (
     first_message_index,
     forwarded_count,
     is_verified,
-    session_data
+    session_data,
+    UNIQUE(user_id, version, room_id, session_id)
 );
-CREATE TABLE one_time_keys (user_id, device_id, key_id, algorithm, claimed, key_data);
-CREATE TABLE fallback_keys (
+CREATE TABLE one_time_keys (
     user_id,
     device_id,
     key_id,
     algorithm,
+    claimed,
     key_data,
-    used
+    UNIQUE(user_id, device_id, key_id, algorithm)
+);
+CREATE TABLE fallback_keys (
+    user_id,
+    device_id,
+    algorithm,
+    key_id,
+    key_data,
+    used,
+    UNIQUE(user_id, device_id, algorithm)
 );
 -- Sync & Messaging
 CREATE TABLE access_tokens (
-    token_id PK,
+    token_id PRIMARY KEY,
     token_hash,
     user_id,
     device_id,
     created_at
 );
 CREATE TABLE sync_tokens (user_id, device_id, since_token, room_positions);
+CREATE TABLE stream_positions (stream_name PRIMARY KEY, position);
 CREATE TABLE to_device_messages (
     id,
     recipient_user_id,
@@ -127,7 +201,9 @@ CREATE TABLE pushers (
     device_display_name,
     profile_tag,
     lang,
-    data
+    data,
+    enabled,
+    UNIQUE(user_id, pushkey, app_id)
 );
 CREATE TABLE push_rules (
     user_id,
@@ -136,9 +212,36 @@ CREATE TABLE push_rules (
     conditions,
     actions,
     enabled,
-    priority
+    priority,
+    UNIQUE(user_id, kind, rule_id)
 );
-CREATE TABLE notification_queue (user_id, room_id, event_id, notification_type, actions);
+CREATE TABLE notification_queue (
+    user_id,
+    room_id,
+    event_id,
+    notification_type,
+    actions
+);
 -- OIDC
-CREATE TABLE idp_providers (id, name, issuer_url, client_id, client_secret_encrypted, scopes, enabled, auto_create_users, username_claim, icon_url, created_at, updated_at);
-CREATE TABLE idp_user_links (provider_id, external_id, user_id, external_email, external_name, last_login_at);
+CREATE TABLE idp_providers (
+    id,
+    name,
+    issuer_url,
+    client_id,
+    client_secret_encrypted,
+    scopes,
+    enabled,
+    auto_create_users,
+    username_claim,
+    icon_url,
+    created_at,
+    updated_at
+);
+CREATE TABLE idp_user_links (
+    provider_id,
+    external_id,
+    user_id,
+    external_email,
+    external_name,
+    last_login_at
+);
