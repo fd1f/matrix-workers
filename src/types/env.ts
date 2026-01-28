@@ -1,5 +1,7 @@
 // Cloudflare Workers Environment Types
 
+import { XMatrixAuth } from "@/utils/federation";
+
 export interface Env {
   // D1 Database
   DB: D1Database;
@@ -70,6 +72,7 @@ export type Variables = {
     deviceId: string | null;
     accessToken: string;
   };
+  federationAuth: XMatrixAuth;
 };
 
 // Combined Hono app type with bindings and variables
