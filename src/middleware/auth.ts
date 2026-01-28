@@ -2,9 +2,10 @@
 
 import { createMiddleware } from 'hono/factory';
 import type { AppEnv } from '../types';
-import { Errors } from '../utils/errors';
+import { Errors, MatrixApiError } from '../utils/errors';
 import { hashToken } from '../utils/crypto';
 import { getUserByTokenHash } from '../services/database';
+import { parseAuthHeader } from '@/utils/federation';
 
 export type AuthContext = {
   userId: string;
@@ -87,6 +88,27 @@ export function requireAuth() {
 
     return next();
   });
+}
+
+export function requireFederationAuth() {
+  return createMiddleware<AppEnv>(async (c, next) => {
+    const header = c.req.header("Authorization")
+    if (!header) {
+      return Errors.unauthorized().toResponse()
+    }
+    let auth
+    try {
+    auth = parseAuthHeader(header, c.env.SERVER_NAME)
+    } catch (e) {
+      if (e instanceof MatrixApiError) {
+        return e.toResponse()
+      } else {
+        return Errors.unknown().toResponse()
+      }
+    }
+    // TODO: add the XMatrixAuth object into the context, or at least its values
+    return next()
+  })
 }
 
 // Middleware that allows optional authentication
