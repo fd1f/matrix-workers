@@ -1,21 +1,19 @@
 # Matrix Homeserver on Cloudflare Workers
 
-hi. this is my attempt to get the homeserver working. it's mainly db schema corrections, but it's still very broken.
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/fd1f/matrix-workers)
 
-you can log in and sync now.
+A fork of @nkuntz's vibe coded Matrix implementation, with some fixes:
 
-if upstream publishes fixes (nkuntz1934/matrix-workers#5), i will just move to that.
+- Database schema fixes to match the code (still in progress, a lot of things are broken)
+- Proper federation header check (nkuntz1934/matrix-workers#9)
 
----
+If upstream publishes fixes (nkuntz1934/matrix-workers#5), there's a chance I will leave this fork alone.
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nkuntz1934/matrix-workers)
-
-This is a proof of concept Matrix homeserver implementation running entirely on Cloudflare's edge infrastructure. This was built to prove E2EE utilizing Matrix protocols over Element X on the Cloudflare Workers Platform. It is meant to serve as an example prototype and not endorsed as ready for production at this point.
-
-I was assisted by Claude Code Opus 4.5 for this implementation to speed up showing that you could message over Cloudflare Workers utilizing the Element Web and Element X App.  Feel free to submit issues, fork the project to make it your own, or continue to build on this example!
+Excreted by Claude Code Opus 4.5, extended with human hands.
 
 ## Table of Contents
 
+- [Deployment](#deployment)
 - [Architecture](#architecture)
 - [Cloudflare Bindings](#cloudflare-bindings)
 - [Request Flow](#request-flow)
@@ -24,10 +22,78 @@ I was assisted by Claude Code Opus 4.5 for this implementation to speed up showi
 - [API Implementation](#api-implementation)
 - [Performance Optimizations](#performance-optimizations)
 - [Security](#security)
-- [Deployment](#deployment)
 - [Limitations](#limitations)
 - [Compatibility](#compatibility)
 - [License](#license)
+
+## Deployment
+
+### Prerequisites
+
+- Cloudflare account (Workers Paid plan for Durable Objects)
+- `wrangler` CLI authenticated
+
+### Local Deploy
+
+```bash
+git clone https://github.com/nkuntz1934/matrix-workers
+cd matrix-workers
+npm install
+npm install @cloudflare/workerd-linux-64 # or whichever runtime applies to your CPU
+
+# Initialise the database
+wrangler d1 execute matrix-db --local --file=./schema.sql
+
+npm run dev
+```
+
+### Quick Deploy
+
+```bash
+# Clone and install
+git clone https://github.com/nkuntz1934/matrix-workers
+cd matrix-workers
+npm install
+
+# Create resources (copy the IDs from output)
+wrangler d1 create matrix-db
+wrangler kv namespace create SESSIONS
+wrangler kv namespace create DEVICE_KEYS
+wrangler kv namespace create ONE_TIME_KEYS
+wrangler kv namespace create CROSS_SIGNING_KEYS
+wrangler kv namespace create CACHE
+wrangler kv namespace create ACCOUNT_DATA
+wrangler r2 bucket create matrix-media
+
+# Initialise the database
+wrangler d1 execute matrix-db --file=./schema.sql
+
+# Deploy
+wrangler deploy
+```
+
+### Configuration
+
+**You must update `wrangler.jsonc` before deploying.** Replace all placeholder values:
+
+| Placeholder | Description | How to Get |
+|-------------|-------------|------------|
+| `YOUR_ACCOUNT_ID` | Cloudflare account ID | Dashboard URL or `wrangler whoami` |
+| `YOUR_DATABASE_ID` | D1 database ID | Output from `wrangler d1 create` |
+| `YOUR_*_KV_ID` | KV namespace IDs | Output from `wrangler kv namespace create` |
+| `SERVER_NAME` | Your Matrix domain | e.g., `matrix.example.com` |
+| `TURN_KEY_ID` | Cloudflare TURN key | Cloudflare Dashboard → Calls → TURN |
+| `LIVEKIT_*` | LiveKit credentials | Optional, for video calls |
+
+### Environment Variables
+```jsonc
+{
+  "vars": {
+    "SERVER_NAME": "matrix.example.com",
+    "REGISTRATION_ENABLED": "true"
+  }
+}
+```
 
 ## Architecture
 
@@ -210,80 +276,6 @@ Please see `schema.sql`.
 - **Device verification**: Cross-signing key chain
 - **Key backup**: Encrypted with recovery key
 - **OTK management**: Atomic claim to prevent reuse
-
-## Deployment
-
-
-### Prerequisites
-
-**Note:** if you want to run locally with Wrangler, ignore these
-
-- Cloudflare account (Workers Paid plan for Durable Objects)
-- `wrangler` CLI authenticated
-
-### Local Deploy
-
-```bash
-git clone https://github.com/nkuntz1934/matrix-workers
-cd matrix-workers
-npm install
-npm install @cloudflare/workerd-linux-64 # or whichever runtime applies to your CPU
-
-# Initialise the database
-wrangler d1 execute matrix-db --local --file=./schema.sql
-
-npm run dev
-```
-
-### Quick Deploy
-
-Don't forget to use `--local` if you're not deploying to Cloudflare.
-
-```bash
-# Clone and install
-git clone https://github.com/nkuntz1934/matrix-workers
-cd matrix-workers
-npm install
-
-# Create resources (copy the IDs from output)
-wrangler d1 create matrix-db
-wrangler kv namespace create SESSIONS
-wrangler kv namespace create DEVICE_KEYS
-wrangler kv namespace create ONE_TIME_KEYS
-wrangler kv namespace create CROSS_SIGNING_KEYS
-wrangler kv namespace create CACHE
-wrangler kv namespace create ACCOUNT_DATA
-wrangler r2 bucket create matrix-media
-
-# Initialise the database
-wrangler d1 execute matrix-db --file=./schema.sql
-
-# Deploy
-wrangler deploy
-```
-
-### Configuration
-
-**You must update `wrangler.jsonc` before deploying.** Replace all placeholder values:
-
-| Placeholder | Description | How to Get |
-|-------------|-------------|------------|
-| `YOUR_ACCOUNT_ID` | Cloudflare account ID | Dashboard URL or `wrangler whoami` |
-| `YOUR_DATABASE_ID` | D1 database ID | Output from `wrangler d1 create` |
-| `YOUR_*_KV_ID` | KV namespace IDs | Output from `wrangler kv namespace create` |
-| `SERVER_NAME` | Your Matrix domain | e.g., `matrix.example.com` |
-| `TURN_KEY_ID` | Cloudflare TURN key | Cloudflare Dashboard → Calls → TURN |
-| `LIVEKIT_*` | LiveKit credentials | Optional, for video calls |
-
-### Environment Variables
-```jsonc
-{
-  "vars": {
-    "SERVER_NAME": "matrix.example.com",
-    "REGISTRATION_ENABLED": "true"
-  }
-}
-```
 
 ## Limitations
 
