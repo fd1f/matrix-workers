@@ -98,7 +98,8 @@ export function requireFederationAuth() {
     }
     let auth
     try {
-    auth = parseAuthHeader(header, c.env.SERVER_NAME)
+      auth = parseAuthHeader(header, c.env.SERVER_NAME)
+      c.set('federationAuth', auth)
     } catch (e) {
       if (e instanceof MatrixApiError) {
         return e.toResponse()
