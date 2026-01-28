@@ -41,8 +41,16 @@ CREATE TABLE room_memberships (
     avatar_url
 );
 CREATE TABLE room_state (room_id, event_type, state_key, event_id);
+CREATE TABLE room_aliases (alias, room_id, creator_id, created_at);
 CREATE TABLE account_data (user_id, room_id, event_type, content);
 CREATE TABLE account_data_changes (user_id, room_id, event_type, stream_position);
+CREATE TABLE presence (user_id, presence, status_msg, last_active_ts);
+CREATE TABLE content_reports (reporter_user_id, room_id, event_id, reason, score, created_at);
+CREATE TABLE transaction_ids (user_id, txn_id, event_id, response);
+-- Federation
+CREATE TABLE server_keys (key_id, public_key, private_key, valid_from, valid_until, is_current);
+-- Media
+CREATE TABLE media (media_id, user_id, content_type, content_length, filename, created_at);
 -- E2EE Tables
 CREATE TABLE devices (
     user_id,
@@ -130,3 +138,7 @@ CREATE TABLE push_rules (
     enabled,
     priority
 );
+CREATE TABLE notification_queue (user_id, room_id, event_id, notification_type, actions);
+-- OIDC
+CREATE TABLE idp_providers (id, name, issuer_url, client_id, client_secret_encrypted, scopes, enabled, auto_create_users, username_claim, icon_url, created_at, updated_at);
+CREATE TABLE idp_user_links (provider_id, external_id, user_id, external_email, external_name, last_login_at);
