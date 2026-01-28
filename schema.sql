@@ -53,11 +53,11 @@ CREATE TABLE room_memberships (
     avatar_url
 );
 CREATE TABLE room_state (
-    room_id PRIMARY KEY,
+    room_id,
     event_type,
     state_key,
     event_id,
-    UNIQUE(event_type, state_key)
+    UNIQUE(room_id, event_type, state_key)
 );
 CREATE TABLE room_aliases (alias, room_id, creator_id, created_at);
 CREATE TABLE account_data (
