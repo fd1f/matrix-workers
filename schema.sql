@@ -50,7 +50,8 @@ CREATE TABLE room_memberships (
     membership,
     event_id,
     display_name,
-    avatar_url
+    avatar_url,
+    UNIQUE(room_id, user_id)
 );
 CREATE TABLE room_state (
     room_id,
